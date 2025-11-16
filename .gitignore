@@ -1,0 +1,14 @@
+# Ignore big dataset
+data/
+*.npz
+*.jpg
+*.png
+*.csv
+
+# Python cache
+__pycache__/
+
+# ROS2 build stuff (just in case)
+build/
+install/
+log/
