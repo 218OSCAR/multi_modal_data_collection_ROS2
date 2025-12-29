@@ -27,6 +27,7 @@ setup(
     'multi_sensor_data_recording = multi_modal_data_collection.multi_sensor_data_recording:main',
     'multi_sensor_data_collection = multi_modal_data_collection.multi_sensor_data_collection:main',
     'button_trigger_node = multi_modal_data_collection.button_trigger_node:main',
+    'multi_sensor_data_collection_with_timestamps = multi_modal_data_collection.multi_sensor_data_collection_with_timestamps:main',
         ],
     },
 )
