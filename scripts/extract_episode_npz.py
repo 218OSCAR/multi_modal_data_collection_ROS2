@@ -339,6 +339,36 @@ def extract_episode(npz_path):
                 writer.writerow(row)
 
         print("🧩 Saved manus_left_nodes.csv")
+    
+    # ============================================================
+    # 6) Extract and save LUCID RGB images
+    # ============================================================
+    if "lucid_rgb" in data:
+        lucid_frames = data["lucid_rgb"]
+        lucid_dir = os.path.join(out_root, "lucid_img")
+        os.makedirs(lucid_dir, exist_ok=True)
+
+        for i, img in enumerate(lucid_frames):
+            # 解 object 包裹
+            if img.dtype == object:
+                try:
+                    img = img.item()
+                except Exception:
+                    img = np.array(img.tolist(), dtype=np.uint8)
+
+            # 防御式检查
+            if not isinstance(img, np.ndarray):
+                print(f"⚠️ Skip lucid frame {i}: not ndarray")
+                continue
+
+            img_uint8 = img.astype(np.uint8)
+
+            cv2.imwrite(
+                os.path.join(lucid_dir, f"lucid_{i:04d}.jpg"),
+                cv2.cvtColor(img_uint8, cv2.COLOR_RGB2BGR)
+            )
+
+        print(f"📸 Saved {len(lucid_frames)} Lucid RGB frames -> {lucid_dir}")
 
 
     print("\n✅ Extraction completed successfully.\n")

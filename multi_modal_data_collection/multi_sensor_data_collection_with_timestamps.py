@@ -158,6 +158,21 @@ class ManusNodesRecorder(RecorderWorker):
 
         super().__init__(node, topic, ManusGlove, parse_fn, name=name)
 
+class LucidRGBRecorder(RecorderWorker):
+    """LUCID RGB image recorder (Bayer BGGR → RGB)."""
+
+    def __init__(self, node, topic='/rgb_lucid'):
+        bridge = CvBridge()
+
+        def parse_fn(msg: Image):
+            raw = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+            rgb = cv2.cvtColor(raw, cv2.COLOR_BAYER_BG2RGB)
+            return rgb
+
+        super().__init__(node, topic, Image, parse_fn, name='LucidRGB')
+
+
+
 # ========== Aggregator ==========
 
 class Aggregator:
@@ -183,7 +198,9 @@ class Aggregator:
     def _tick(self):
         if not self.active:
             return
-        ref_worker = self.workers.get("realsense_rgb")
+        # ref_worker = self.workers.get("realsense_rgb")
+        # not hard coded realsense_rgb 
+        ref_worker = next(iter(self.workers.values()))
         if not ref_worker or not ref_worker.buf:
             return
 
@@ -253,6 +270,13 @@ class Aggregator:
             t_ln, data_ln = picks["manus_left_nodes"]
             sample["manus_left_nodes"] = data_ln
             sample["manus_left_nodes_t"] = float(t_ln)
+
+        # LUCID camera data
+        if "lucid_rgb" in picks:
+            t_l, data_l = picks["lucid_rgb"]
+            sample["lucid_rgb"] = data_l
+            sample["lucid_rgb_t"] = float(t_l)
+
 
         
 
@@ -387,6 +411,11 @@ class EpisodeRecorder:
         manus_left_nodes_list = []
         manus_left_nodes_t_list = []
 
+        # LUCID camera data
+        lucid_rgb_list = []
+        lucid_rgb_t_list = []
+
+
         
 
         for s in self.samples:
@@ -430,9 +459,11 @@ class EpisodeRecorder:
                 manus_left_nodes_list.append(s["manus_left_nodes"])
                 manus_left_nodes_t_list.append(s["manus_left_nodes_t"])
 
+            # LUCID camera data
+            if "lucid_rgb" in s:
+                lucid_rgb_list.append(s["lucid_rgb"])
+                lucid_rgb_t_list.append(s["lucid_rgb_t"])
 
-
-            
 
         # assemble arrays
         arrays = {
@@ -501,6 +532,14 @@ class EpisodeRecorder:
             arrays["manus_left_nodes_t"] = t_arr
             arrays["manus_left_nodes_dt"] = t_arr - t_ref_arr
 
+        # LUCID camera data
+        if lucid_rgb_list:
+            arrays["lucid_rgb"] = np.array(lucid_rgb_list, dtype=object)
+            t_arr = np.array(lucid_rgb_t_list, dtype=np.float64)
+            arrays["lucid_rgb_t"] = t_arr
+            arrays["lucid_rgb_dt"] = t_arr - t_ref_arr
+
+
 
 
 
@@ -547,6 +586,11 @@ class DataRecorderNode(Node):
         self.declare_parameter('enable_manus_left_ergo', False)
         self.declare_parameter('enable_manus_right_nodes', True)
         self.declare_parameter('enable_manus_left_nodes', False)
+
+        # ---- LUCID camera parameters ----
+        self.declare_parameter('enable_lucid', False)
+        self.declare_parameter('lucid_topic', '/rgb_lucid')
+
         
 
 
@@ -575,6 +619,11 @@ class DataRecorderNode(Node):
         # Manus topics
         manus_right_topic = self.get_parameter('manus_right_topic').value
         manus_left_topic  = self.get_parameter('manus_left_topic').value
+
+        # LUCID camera topics
+        enable_lucid = self.get_parameter('enable_lucid').value
+        lucid_topic  = self.get_parameter('lucid_topic').value
+
 
         
 
@@ -609,6 +658,11 @@ class DataRecorderNode(Node):
             self.workers["manus_left_nodes"] = ManusNodesRecorder(
                 self, manus_left_topic, "ManusLeftNodes"
             )
+
+        # ---- LUCID camera workers ----
+        if enable_lucid:
+            self.workers["lucid_rgb"] = LucidRGBRecorder(self, lucid_topic)
+
     
 
         if not self.workers:

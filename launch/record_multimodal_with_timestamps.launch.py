@@ -11,7 +11,7 @@ def generate_launch_description():
         DeclareLaunchArgument('out_dir', default_value='/home/tailai.cheng/tailai_ws/src/multi_modal_data_collection/data'),
         DeclareLaunchArgument('rate_hz', default_value='10.0'),
         DeclareLaunchArgument('slop_sec', default_value='0.1'),
-        DeclareLaunchArgument('enable_rgb', default_value='true'),
+        DeclareLaunchArgument('enable_rgb', default_value='false'),
         DeclareLaunchArgument('enable_rgb2', default_value='false'),
         DeclareLaunchArgument('enable_vive', default_value='false'),
         DeclareLaunchArgument('enable_ultimate_vive', default_value='true'),
@@ -26,15 +26,20 @@ def generate_launch_description():
         # -------------------------------
         # Manus glove parameters
         # -------------------------------
-        DeclareLaunchArgument('enable_manus_right_ergo', default_value='true'),
+        DeclareLaunchArgument('enable_manus_right_ergo', default_value='false'),
         DeclareLaunchArgument('enable_manus_left_ergo',  default_value='false'),
-        DeclareLaunchArgument('enable_manus_right_nodes', default_value='true'),
+        DeclareLaunchArgument('enable_manus_right_nodes', default_value='false'),
         DeclareLaunchArgument('enable_manus_left_nodes',  default_value='false'),
 
         DeclareLaunchArgument('manus_right_topic', default_value='/manus_glove_right_corrected'),
         DeclareLaunchArgument('manus_left_topic',  default_value='/manus_glove_left_corrected'),
 
-        
+        # -------------------------------
+        # LUCID camera parameters 
+        # -------------------------------
+        DeclareLaunchArgument('enable_lucid', default_value='true'),
+        DeclareLaunchArgument('lucid_topic', default_value='/rgb_lucid'),
+
         # --- NEW node launch (timestamps version) ---
         Node(
             package='multi_modal_data_collection',
@@ -65,6 +70,10 @@ def generate_launch_description():
 
                     'manus_right_topic': LaunchConfiguration('manus_right_topic'),
                     'manus_left_topic':  LaunchConfiguration('manus_left_topic'),
+
+                    # LUCID camera
+                    'enable_lucid': LaunchConfiguration('enable_lucid'),
+                    'lucid_topic':  LaunchConfiguration('lucid_topic'),
                 
                 }
             ]
