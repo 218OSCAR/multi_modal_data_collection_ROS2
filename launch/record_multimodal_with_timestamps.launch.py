@@ -8,17 +8,17 @@ def generate_launch_description():
     return LaunchDescription([
 
         # --- configurable parameters ---
-        DeclareLaunchArgument('out_dir', default_value='/home/tailai.cheng/tailai_ws/src/multi_modal_data_collection/data'),
+        DeclareLaunchArgument('out_dir', default_value='/home/agile/ros2_ws/src/multi_modal_data_collection/data'),
         DeclareLaunchArgument('rate_hz', default_value='10.0'),
         DeclareLaunchArgument('slop_sec', default_value='0.1'),
-        DeclareLaunchArgument('enable_rgb', default_value='false'),
+        DeclareLaunchArgument('enable_rgb', default_value='true'),
         DeclareLaunchArgument('enable_rgb2', default_value='false'),
         DeclareLaunchArgument('enable_vive', default_value='false'),
         DeclareLaunchArgument('enable_ultimate_vive', default_value='true'),
         DeclareLaunchArgument('enable_tactile', default_value='true'),
 
-        DeclareLaunchArgument('rgb_topic', default_value='/camera_up/color/image_rect_raw'),
-        DeclareLaunchArgument('rgb2_topic', default_value='/camera_down/color/image_rect_raw'),
+        DeclareLaunchArgument('rgb_topic', default_value='/camera/camera_up/color/image_rect_raw'),
+        DeclareLaunchArgument('rgb2_topic', default_value='/camera/camera_down/color/image_rect_raw'),
         DeclareLaunchArgument('tactile_topic', default_value='/gelsight/image_raw'),
         DeclareLaunchArgument('vive_topic', default_value='/vive_tracker/pose'),
         DeclareLaunchArgument('ultimate_vive_topic', default_value='/vive_ultimate_tracker/pose'),
@@ -37,7 +37,7 @@ def generate_launch_description():
         # -------------------------------
         # LUCID camera parameters 
         # -------------------------------
-        DeclareLaunchArgument('enable_lucid', default_value='true'),
+        DeclareLaunchArgument('enable_lucid', default_value='false'),
         DeclareLaunchArgument('lucid_topic', default_value='/rgb_lucid'),
 
         # --- NEW node launch (timestamps version) ---

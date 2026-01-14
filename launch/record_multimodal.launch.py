@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription([
         # --- configurable parameters ---
-        DeclareLaunchArgument('out_dir', default_value='/home/tailai.cheng/tailai_ws/src/multi_modal_data_collection/data'),
+        DeclareLaunchArgument('out_dir', default_value='/home/agile/ros2_ws/src/multi_modal_data_collection/data'),
         DeclareLaunchArgument('rate_hz', default_value='10.0'),
         DeclareLaunchArgument('slop_sec', default_value='0.1'),
         DeclareLaunchArgument('enable_rgb', default_value='true'),

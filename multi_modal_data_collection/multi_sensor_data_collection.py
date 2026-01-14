@@ -191,7 +191,10 @@ class Aggregator:
     def _tick(self):
         if not self.active:
             return
-        ref_worker = self.workers.get("realsense_rgb")
+        # ref_worker = self.workers.get("realsense_rgb")
+        # not hard coded realsense_rgb
+ 
+        ref_worker = next(iter(self.workers.values()))
         if not ref_worker or not ref_worker.buf:
             return
 
@@ -425,7 +428,7 @@ class DataRecorderNode(Node):
         super().__init__('multi_sensor_data_collection')
 
         # declare parameters
-        self.declare_parameter('out_dir', '/home/tailai.cheng/tailai_ws/src/multi_modal_data_collection/data')
+        self.declare_parameter('out_dir', '/home/agile/ros2_ws/src/multi_modal_data_collection/data')
         self.declare_parameter('rate_hz', 5.0)
         self.declare_parameter('slop_sec', 0.10)
         self.declare_parameter('enable_rgb', True)

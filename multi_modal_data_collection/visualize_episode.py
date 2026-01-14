@@ -7,11 +7,23 @@ to see which modalities are saved and their array shapes.
 Usage:
     python3 visualize_episode.py /path/to/episode_xxxxx.npz
 """
+import cv2
+from io import BytesIO
 
 import numpy as np
 import sys
 import os
 import json
+def jpeg_bytes_to_rgb(jpeg_bytes):
+    """
+    Decode JPEG bytes to RGB numpy array (H, W, 3).
+    """
+    buf = np.frombuffer(jpeg_bytes, dtype=np.uint8)
+    bgr = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+    if bgr is None:
+        raise RuntimeError("Failed to decode JPEG bytes")
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    return rgb
 
 def visualize_npz(npz_path):
     if not os.path.exists(npz_path):
@@ -41,12 +53,36 @@ def visualize_npz(npz_path):
         if isinstance(arr, np.ndarray):
             print(f"📍 '{k}': dtype={arr.dtype}, shape={arr.shape}")
             # If it's an object array (list of frames)
+            # if arr.dtype == object and len(arr) > 0:
+            #     first = arr[0]
+            #     if isinstance(first, np.ndarray):
+            #         print(f"    ↳ first element: ndarray, shape={first.shape}, dtype={first.dtype}")
+            #     else:
+            #         print(f"    ↳ first element type: {type(first)}")
             if arr.dtype == object and len(arr) > 0:
                 first = arr[0]
-                if isinstance(first, np.ndarray):
-                    print(f"    ↳ first element: ndarray, shape={first.shape}, dtype={first.dtype}")
+
+                # Case 1: JPEG bytes (rgb / tactile)
+                if isinstance(first, (bytes, bytearray)):
+                    try:
+                        rgb = jpeg_bytes_to_rgb(first)
+                        print(
+                            f"    ↳ first element: JPEG bytes → decoded RGB, "
+                            f"shape={rgb.shape}, dtype={rgb.dtype}"
+                        )
+                    except Exception as e:
+                        print(f"    ↳ first element: bytes (JPEG), decode failed: {e}")
+
+                # Case 2: already ndarray
+                elif isinstance(first, np.ndarray):
+                    print(
+                        f"    ↳ first element: ndarray, "
+                        f"shape={first.shape}, dtype={first.dtype}"
+                    )
+
                 else:
                     print(f"    ↳ first element type: {type(first)}")
+
         else:
             print(f"📍 '{k}': type={type(arr)}")
 

@@ -29,6 +29,8 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import PoseStamped
 from cv_bridge import CvBridge
 from manus_ros2_msgs.msg import ManusGlove
+from sensor_msgs.msg import CompressedImage
+
 
 
 # ========== Utility functions ==========
@@ -86,27 +88,83 @@ class RecorderWorker:
 
 # ========== Dedicated Recorder ==========
 
+# class RealSenseRGBRecorder(RecorderWorker):
+#     """RealSense RGB image recorder."""
+#     def __init__(self, node, topic='/camera_up/color/image_rect_raw'):
+#         bridge = CvBridge()
+
+#         def parse_fn(msg: Image):
+#             img_bgr = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+#             return cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+#         super().__init__(node, topic, Image, parse_fn, name='RealSenseRGB')
+def encode_jpeg(rgb: np.ndarray, quality: int = 85) -> bytes:
+    """
+    Encode RGB uint8 image to JPEG bytes.
+    """
+    assert rgb.dtype == np.uint8
+    bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    ok, buf = cv2.imencode(
+        ".jpg",
+        bgr,
+        [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+    )
+    if not ok:
+        raise RuntimeError("JPEG encoding failed")
+    return buf.tobytes()
+
 class RealSenseRGBRecorder(RecorderWorker):
-    """RealSense RGB image recorder."""
-    def __init__(self, node, topic='/camera_up/color/image_rect_raw'):
+    """RealSense RGB image recorder (JPEG compressed)."""
+
+    def __init__(self, node, topic='/camera_up/color/image_rect_raw', jpeg_quality=85):
         bridge = CvBridge()
 
         def parse_fn(msg: Image):
             img_bgr = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            return cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            jpeg = encode_jpeg(rgb, quality=jpeg_quality)
+            return jpeg   # 👈 返回 bytes，而不是 numpy
 
-        super().__init__(node, topic, Image, parse_fn, name='RealSenseRGB')
+        super().__init__(
+            node,
+            topic,
+            Image,
+            parse_fn,
+            name='RealSenseRGB',
+        )
+
+
         
+# class TactileSensorRecorder(RecorderWorker):
+#     """Tactile sensor (GelSight) image recorder."""
+#     def __init__(self, node, topic='/gelsight/image_raw'):
+#         bridge = CvBridge()
+
+#         def parse_fn(msg: Image):
+#             img_bgr = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+#             return cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+#         super().__init__(node, topic, Image, parse_fn, name='TactileSensor')
+
 class TactileSensorRecorder(RecorderWorker):
-    """Tactile sensor (GelSight) image recorder."""
-    def __init__(self, node, topic='/gelsight/image_raw'):
+    """Tactile sensor (GelSight) recorder (JPEG compressed)."""
+
+    def __init__(self, node, topic='/gelsight/image_raw', jpeg_quality=85):
         bridge = CvBridge()
 
         def parse_fn(msg: Image):
             img_bgr = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            return cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            jpeg = encode_jpeg(rgb, quality=jpeg_quality)
+            return jpeg
 
-        super().__init__(node, topic, Image, parse_fn, name='TactileSensor')
+        super().__init__(
+            node,
+            topic,
+            Image,
+            parse_fn,
+            name='TactileSensor',
+        )
 
 
 class ViveTrackerRecorder(RecorderWorker):
@@ -158,18 +216,37 @@ class ManusNodesRecorder(RecorderWorker):
 
         super().__init__(node, topic, ManusGlove, parse_fn, name=name)
 
-class LucidRGBRecorder(RecorderWorker):
-    """LUCID RGB image recorder (Bayer BGGR → RGB)."""
+# class LucidRGBRecorder(RecorderWorker):
+#     """LUCID RGB image recorder (Bayer BGGR → RGB)."""
 
-    def __init__(self, node, topic='/rgb_lucid'):
+#     def __init__(self, node, topic='/rgb_lucid'):
+#         bridge = CvBridge()
+
+#         def parse_fn(msg: Image):
+#             raw = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+#             rgb = cv2.cvtColor(raw, cv2.COLOR_BAYER_BG2RGB)
+#             return rgb
+
+#         super().__init__(node, topic, Image, parse_fn, name='LucidRGB')
+class LucidRGBRecorder(RecorderWorker):
+    """LUCID RGB recorder (Bayer BGGR → RGB → JPEG)."""
+
+    def __init__(self, node, topic='/rgb_lucid', jpeg_quality=85):
         bridge = CvBridge()
 
         def parse_fn(msg: Image):
             raw = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
             rgb = cv2.cvtColor(raw, cv2.COLOR_BAYER_BG2RGB)
-            return rgb
+            jpeg = encode_jpeg(rgb, quality=jpeg_quality)
+            return jpeg
 
-        super().__init__(node, topic, Image, parse_fn, name='LucidRGB')
+        super().__init__(
+            node,
+            topic,
+            Image,
+            parse_fn,
+            name='LucidRGB',
+        )
 
 
 
@@ -566,7 +643,7 @@ class DataRecorderNode(Node):
         super().__init__('multi_sensor_data_collection_with_timestamps')
 
         # declare parameters
-        self.declare_parameter('out_dir', '/home/tailai.cheng/tailai_ws/src/multi_modal_data_collection/data')
+        self.declare_parameter('out_dir', '/home/agile/ros2_ws/src/multi_modal_data_collection/data')
         self.declare_parameter('rate_hz', 5.0)
         self.declare_parameter('slop_sec', 0.10)
         self.declare_parameter('enable_rgb', True)

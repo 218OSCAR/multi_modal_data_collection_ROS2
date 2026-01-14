@@ -695,7 +695,7 @@ class DataRecorderNode(Node):
 
         self.declare_parameter('rate_hz', 5.0)
         self.declare_parameter('slop_sec', 0.5)
-        self.declare_parameter('out_dir', '/home/tailai.cheng/tailai_ws/src/multi_modal_data_collection/data')
+        self.declare_parameter('out_dir', '/home/agile/ros2_ws/src/multi_modal_data_collection/data')
 
         # RealSense
         self.declare_parameter('enable_rs', True)
